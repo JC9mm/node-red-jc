@@ -177,4 +177,57 @@ describe("api/auth/tokens", function() {
         });
     });
 
+    describe("#list", function() {
+        it('returns a list of tokens', function(done) {
+            Tokens.init({},{
+                getSessions:function() {
+                    return Promise.resolve({
+                        "1234":{"user":"fred","expires":Date.now()+1000},
+                        "5678":{"user":"barney","expires":Date.now()+2000}
+                    });
+                }
+            }).then(function() {
+                Tokens.list().then(function(tokens) {
+                    try {
+                        tokens.should.have.lengthOf(2);
+                        tokens[0].should.have.a.property("user","fred");
+                        tokens[1].should.have.a.property("user","barney");
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+            });
+        });
+    });
+
+    describe("#revokeAll", function() {
+        it('revokes all tokens for a user', function(done) {
+            var savedSession;
+            Tokens.init({},{
+                getSessions:function() {
+                    return Promise.resolve({
+                        "1234":{"user":"fred","expires":Date.now()+1000},
+                        "5678":{"user":"fred","expires":Date.now()+2000},
+                        "91011":{"user":"barney","expires":Date.now()+3000}
+                    });
+                },
+                saveSessions:function(sess) {
+                    savedSession = sess;
+                    return Promise.resolve();
+                }
+            }).then(function() {
+                Tokens.revokeAll("fred").then(function() {
+                    try {
+                        savedSession.should.not.have.a.property("1234");
+                        savedSession.should.not.have.a.property("5678");
+                        savedSession.should.have.a.property("91011");
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+            });
+        });
+    });
 });

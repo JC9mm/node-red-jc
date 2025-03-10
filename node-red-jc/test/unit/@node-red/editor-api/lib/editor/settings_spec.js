@@ -94,4 +94,56 @@ describe("api/editor/settings", function() {
         });
     });
 
+    it('returns the global settings', function(done) {
+        info.init({}, {
+            settings: {
+                get: function(key) {
+                    if (key === "editorTheme") {
+                        return { existing: 123, test: 456 };
+                    }
+                    return null;
+                }
+            }
+        });
+        request(app)
+        .get("/settings")
+        .expect(200)
+        .end(function(err,res) {
+            if (err) {
+                return done(err);
+            }
+            res.body.should.eql({ existing: 123, test: 456 });
+            done();
+        });
+    });
+
+    it('updates the global settings', function(done) {
+        var update;
+        info.init({}, {
+            settings: {
+                set: function(key, value) {
+                    if (key === "editorTheme") {
+                        update = value;
+                        return Promise.resolve();
+                    }
+                    return Promise.reject(new Error("Unknown key"));
+                }
+            }
+        });
+        request(app)
+        .post("/settings")
+        .send({
+            existing: 789,
+            newSetting: 101112
+        })
+        .expect(204)
+        .end(function(err,res) {
+            if (err) {
+                return done(err);
+            }
+            update.should.eql({ existing: 789, newSetting: 101112 });
+            done();
+        });
+    });
+
 });

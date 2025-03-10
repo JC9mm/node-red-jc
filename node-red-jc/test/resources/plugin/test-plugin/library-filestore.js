@@ -1,4 +1,3 @@
-
 module.exports = function(RED) {
     const PLUGIN_TYPE_ID = "node-red-library-filestore";
 
